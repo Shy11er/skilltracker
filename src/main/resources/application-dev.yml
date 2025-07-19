@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/skilltrack
+    username: postgres
+    password: postgres
+  liquibase:
+    change-log: classpath:liquibase/changelog.xml
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+  main:
+    allow-bean-definition-overriding: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 232449983582-r105thvan56t1nsmh5detj9fqhgoh6d8.apps.googleusercontent.com
+            client-secret: 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
+
+server:
+  servlet:
+    context-path: /api
+  port: 8080
+
+jwt:
+  secret: aisvfgjasfkjdhasvfjgasvdhfasgdfadcasgvdasgdv
+  expiration: 3600000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+cors:
+  origins: http://localhost:3000
