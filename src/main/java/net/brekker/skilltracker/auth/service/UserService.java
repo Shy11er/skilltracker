@@ -6,6 +6,7 @@ import net.brekker.skilltracker.auth.db.domain.Role;
 import net.brekker.skilltracker.auth.db.domain.User;
 import net.brekker.skilltracker.auth.db.repository.UserRepository;
 import net.brekker.skilltracker.auth.dto.UserDto;
+import net.brekker.skilltracker.common.enums.ProviderType;
 import net.brekker.skilltracker.common.enums.RoleName;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,18 +33,28 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(String.format("User not found with id: %s", id)));
     }
 
-    public User getByEmail(String email) {
-        return userRepository.findByEmail(email).orElse(null);
+    public UserDto getByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .orElse(null);
     }
 
-    public User getByUsername(String username) {
-        return userRepository.findByUsername(username).orElse(null);
+    public UserDto getByEmailAndProvider(String email, ProviderType providerType) {
+        return userRepository.findByEmailAndProvider(email, providerType)
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .orElse(null);
     }
 
-    public UserDto save(UserDto dto) {
+    public UserDto getByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .orElse(null);
+    }
+
+    public UserDto save(UserDto dto, ProviderType providerType) {
         User user = modelMapper.map(dto, User.class);
 
-        User findUser = getByEmail(user.getEmail());
+        UserDto findUser = getByEmail(user.getEmail());
         if (nonNull(findUser)) {
             throw new IllegalArgumentException(String.format("User with email %s already exists", user.getEmail()));
         }
@@ -55,6 +66,7 @@ public class UserService {
 
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPassword);
+        user.setProvider(providerType);
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.getByName(RoleName.ROLE_USER));
         user.setRoles(roles);

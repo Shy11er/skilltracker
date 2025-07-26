@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     email      VARCHAR(255) NOT NULL UNIQUE,
     password   VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    provider   VARCHAR(50)  NOT NULL,
     CONSTRAINT user_pkey    PRIMARY KEY (id)
 );
 

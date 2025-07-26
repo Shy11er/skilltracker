@@ -6,6 +6,7 @@
     import net.brekker.skilltracker.auth.dto.ExceptionResponseDto;
     import net.brekker.skilltracker.auth.dto.ValidationErrorResponseDto;
     import net.brekker.skilltracker.auth.dto.Violation;
+    import net.brekker.skilltracker.common.exceptions.ProviderConflictException;
     import net.brekker.skilltracker.common.exceptions.RateLimitException;
     import org.slf4j.Logger;
     import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@
     import org.springframework.web.bind.annotation.ResponseStatus;
     import org.springframework.web.bind.annotation.RestControllerAdvice;
     import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+    import org.springframework.web.servlet.resource.NoResourceFoundException;
 
     import javax.naming.AuthenticationException;
     import java.nio.file.AccessDeniedException;
@@ -102,9 +104,17 @@
         /* 404 */
         @ExceptionHandler({
                 EntityNotFoundException.class,
+                NoResourceFoundException.class,
         })
         @ResponseStatus(HttpStatus.NOT_FOUND)
         public ExceptionResponseDto handleNotFoundException(Exception exception) {
+            return getExceptionResponseDto(exception);
+        }
+
+        /* 409 */
+        @ExceptionHandler(ProviderConflictException.class)
+        @ResponseStatus(HttpStatus.CONFLICT)
+        public ExceptionResponseDto handleProviderConflictException(ProviderConflictException exception) {
             return getExceptionResponseDto(exception);
         }
 

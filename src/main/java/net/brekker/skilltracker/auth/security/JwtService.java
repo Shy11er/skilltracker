@@ -4,6 +4,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,12 +56,7 @@ public class JwtService {
     }
 
     private String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return Jwts.builder()
-                .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey()).compact();
+        return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + expiration)).signWith(getSigningKey()).compact();
     }
 
     public String generateRefreshToken(String username) {
@@ -68,25 +64,19 @@ public class JwtService {
         Date expiry = new Date(now.getTime() + Duration.ofDays(7).toMillis());
         SecretKey key = getSigningKey();
 
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        return Jwts.builder().setSubject(username).setIssuedAt(now).setExpiration(expiry).signWith(key,
+                SignatureAlgorithm.HS256).compact();
     }
 
     public String extractToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 
-        return (nonNull(authHeader) && authHeader.startsWith("Bearer "))
-                ? authHeader.substring(7)
-                : null;
+        return (nonNull(authHeader) && authHeader.startsWith("Bearer ")) ? authHeader.substring(7) : null;
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(secret.getBytes()).build().parseClaimsJwt(token);
+            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
             return false;
@@ -94,12 +84,12 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        return Jwts.parserBuilder().setSigningKey(secret.getBytes()).build().parseClaimsJwt(token).getBody().getSubject();
+        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody().getSubject();
     }
 
     /**
      * Получение ключа для подписи токена
-     *
+     * <p>
      * Для генерации jwtSigningKey
      * SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
      * String secretString = Encoders.BASE64.encode(key.getEncoded());
