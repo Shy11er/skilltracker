@@ -8,6 +8,7 @@ import net.brekker.skilltracker.auth.db.repository.UserRepository;
 import net.brekker.skilltracker.auth.dto.UserDto;
 import net.brekker.skilltracker.common.enums.ProviderType;
 import net.brekker.skilltracker.common.enums.RoleName;
+import net.brekker.skilltracker.common.utils.RandomPasswordUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,18 +30,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
-    public User get(UUID id) {
-        return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(String.format("User not found with id: %s", id)));
-    }
-
     public UserDto getByEmail(String email) {
         return userRepository.findByEmail(email)
-                .map(user -> modelMapper.map(user, UserDto.class))
-                .orElse(null);
-    }
-
-    public UserDto getByEmailAndProvider(String email, ProviderType providerType) {
-        return userRepository.findByEmailAndProvider(email, providerType)
                 .map(user -> modelMapper.map(user, UserDto.class))
                 .orElse(null);
     }
@@ -49,6 +40,22 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .map(user -> modelMapper.map(user, UserDto.class))
                 .orElse(null);
+    }
+
+    public UserDto saveOAuthUserIfExists(String email, String username, ProviderType providerType) {
+        UserDto existingUser = getByEmail(email);
+
+        if (existingUser != null) {
+            if (existingUser.getProvider().equals(ProviderType.LOCAL)) {
+                throw new IllegalArgumentException(String.format("User with email %s was already registered by the other way", email));
+            }
+
+            return existingUser;
+        }
+
+        UserDto userDto = UserDto.builder().email(email).username(username).password(RandomPasswordUtil.generate(10)).build();
+
+        return save(userDto, providerType);
     }
 
     public UserDto save(UserDto dto, ProviderType providerType) {

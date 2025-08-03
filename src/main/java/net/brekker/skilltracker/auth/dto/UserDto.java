@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import net.brekker.skilltracker.common.enums.ProviderType;
 import net.brekker.skilltracker.common.enums.RoleName;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 import java.util.Set;
@@ -41,4 +42,12 @@ public class UserDto {
     @JsonIgnore
     @Schema(description = "Провайдер")
     private ProviderType provider;
+
+    public UserDetails toUserDetails() {
+        return org.springframework.security.core.userdetails.User
+                .withUsername(username)
+                .password(password)
+                .authorities(roles.stream().map(Enum::name).toArray(String[]::new))
+                .build();
+    }
 }

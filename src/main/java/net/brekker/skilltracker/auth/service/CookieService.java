@@ -15,16 +15,20 @@ public class CookieService {
     public static final String JWT_REFRESH_TOKEN_COOKIE_NAME = "refresh-token";
     public static final String JWT_ACCESS_TOKEN_COOKIE_NAME = "access-token";
 
-    public void addAccessTokenCookie(HttpServletResponse response, UserDetails user) {
+    public String addAccessTokenCookie(HttpServletResponse response, UserDetails user) {
         String accessToken = jwtService.generateToken(user);
         Cookie cookie = build(JWT_ACCESS_TOKEN_COOKIE_NAME, accessToken, "/", 15 * 60);
         response.addCookie(cookie);
+
+        return accessToken;
     }
 
-    public void addRefreshTokenCookie(HttpServletResponse response, UserDetails user) {
+    public String addRefreshTokenCookie(HttpServletResponse response, UserDetails user) {
         String refreshToken = jwtService.generateRefreshToken(user.getUsername());
         Cookie cookie = build(JWT_REFRESH_TOKEN_COOKIE_NAME, refreshToken, "/auth/refresh", 7 * 24 * 60 * 60);
         response.addCookie(cookie);
+
+        return refreshToken;
     }
 
     private Cookie build(String name, String value, String path, int maxAge) {

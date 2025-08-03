@@ -32,7 +32,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtService jwtService;
-    private final CustomUserDetailsService customUserDetailsService;
     private final UserService userService;
 
     @RateLimited
@@ -85,13 +84,6 @@ public class AuthController {
     public void logout(HttpServletResponse response) {
         authService.logout(response);
     }
-
-    @PostMapping("/google")
-    public void googleLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
-        String token = request.get("token");
-        authService.googleLogin(token, response);
-    }
-
 
     @Operation(summary = "Получение текущего пользователя")
     @ApiResponses(value = {
