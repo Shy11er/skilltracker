@@ -4,15 +4,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import net.brekker.skilltracker.common.enums.ProviderType;
 import net.brekker.skilltracker.common.enums.RoleName;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserDto {
 
     @Schema(description = "Id сущности", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -33,4 +38,16 @@ public class UserDto {
 
     @Schema(description = "Роли пользователя", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<RoleName> roles;
+
+    @JsonIgnore
+    @Schema(description = "Провайдер")
+    private ProviderType provider;
+
+    public UserDetails toUserDetails() {
+        return org.springframework.security.core.userdetails.User
+                .withUsername(username)
+                .password(password)
+                .authorities(roles.stream().map(Enum::name).toArray(String[]::new))
+                .build();
+    }
 }

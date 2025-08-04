@@ -1,6 +1,8 @@
 package net.brekker.skilltracker.auth.security;
 
 import lombok.RequiredArgsConstructor;
+import net.brekker.skilltracker.auth.service.CookieService;
+import net.brekker.skilltracker.auth.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,9 +14,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -22,7 +32,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenFilter jwtTokenFilter, UnauthorizedEntryPoint unauthorizedEntryPoint) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtTokenFilter jwtTokenFilter,
+            UnauthorizedEntryPoint unauthorizedEntryPoint,
+            CustomOAuth2UserService customOAuth2UserService,
+            UserService userService,
+            CookieService cookieService) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(
@@ -41,6 +57,11 @@ public class SecurityConfig {
                                         .anyRequest()
                                         .authenticated())
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/auth/login")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler(userService, cookieService))
+                )
                 .exceptionHandling(
                         eh ->
                                 eh.authenticationEntryPoint(unauthorizedEntryPoint)
@@ -56,5 +77,15 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CustomOAuth2UserService customOAuth2UserService(UserService userService) {
+        return new CustomOAuth2UserService(userService);
+    }
+
+    @Bean
+    public OAuth2SuccessHandler oAuth2SuccessHandler(UserService userService, CookieService cookieService) {
+        return new OAuth2SuccessHandler(userService, cookieService);
     }
 }

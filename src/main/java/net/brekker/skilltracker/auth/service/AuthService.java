@@ -1,5 +1,6 @@
 package net.brekker.skilltracker.auth.service;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -8,10 +9,12 @@ import net.brekker.skilltracker.auth.dto.SignUpRequestDto;
 import net.brekker.skilltracker.auth.dto.UserDto;
 import net.brekker.skilltracker.auth.security.CustomUserDetailsService;
 import net.brekker.skilltracker.auth.security.JwtService;
+import net.brekker.skilltracker.common.enums.ProviderType;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +31,13 @@ public class AuthService {
     private final ModelMapper modelMapper;
     private final CookieService cookieService;
 
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String clientId;
+
     public void signup(HttpServletResponse response, SignUpRequestDto signUpRequestDto) {
         UserDto userDto = modelMapper.map(signUpRequestDto, UserDto.class);
-        UserDto savedUser = userService.save(userDto);
+        UserDto savedUser = userService.save(userDto, ProviderType.LOCAL);
         UserDetails userDetails = org.springframework.security.core.userdetails.User
                 .withUsername(savedUser.getUsername())
                 .password(savedUser.getPassword())
@@ -41,10 +48,16 @@ public class AuthService {
     }
 
     public void login(HttpServletResponse response, SignInRequestDto signInRequestDto) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signInRequestDto.getUsername(), signInRequestDto.getPassword()));
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(signInRequestDto.getUsername());
-
-        setAuthCookies(response, userDetails);
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(signInRequestDto.getUsername(),
+                            signInRequestDto.getPassword())
+            );
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(signInRequestDto.getUsername());
+            setAuthCookies(response, userDetails);
+        } catch (AuthenticationException exception) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        }
     }
 
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -60,6 +73,13 @@ public class AuthService {
         setAccessTokenOnly(response, userDetails);
 
         response.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    public void logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie(JWT_ACCESS_TOKEN_COOKIE_NAME, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
     private void setAccessTokenOnly(HttpServletResponse response, UserDetails user) {
