@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'net.brekker'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+    compileOnly 'org.springframework.security:spring-security-core:6.2.3'
+    compileOnly 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.5.0'
+}
