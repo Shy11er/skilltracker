@@ -1,1 +1,14 @@
-rootProject.name = 'skilltracker'
+pluginManagement {
+    plugins {
+        id 'org.springframework.boot' version '3.2.5'
+    }
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'backend'
+
+include 'common'
+include 'auth'
