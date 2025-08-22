@@ -1,0 +1,21 @@
+# build артефакты
+*.jar
+target/
+build/
+dist/
+
+# node
+node_modules/
+storybook-static/
+
+# VCS/IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+
+# прочее крупное
+*.zip
+*.tar
+*.tar.gz

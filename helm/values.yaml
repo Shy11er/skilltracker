@@ -1,0 +1,39 @@
+replicaCount: 2
+
+image:
+  repository: auth
+  tag: "dev"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: auth.local
+      path: /
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+env:
+  SPRING_PROFILES_ACTIVE: "dev"
+
+postgresql:
+  fullnameOverride: postgresql
+  primary:
+    persistence:
+      enabled: false
+  auth:
+    database: skilltrack
+    username: postgres
+    password: "postgres"
